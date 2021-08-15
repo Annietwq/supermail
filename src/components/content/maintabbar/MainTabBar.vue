@@ -35,7 +35,5 @@
 </script>
 
 <style scoped>
-.tab-bar {
-	z-index: 99999;
-}
+
 </style>
