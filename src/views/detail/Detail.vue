@@ -16,8 +16,9 @@
       <detail-comment-info :comment-info="commentInfo" ref="comment" />
       <good-list :goods="recommend" ref="recommend" />
     </scroll>
-    <detail-bottom-bar />
+    <detail-bottom-bar @addToCart="addToCart" />
     <back-top @click.native="backTop" v-show="isShow" />
+		<toast :message="message" :show="show"/>
   </div>
 </template>
 
@@ -33,6 +34,7 @@ import DetailBottomBar from "./childComps/DetailBottomBar.vue";
 
 import Scroll from "components/common/scroll/Scroll";
 import GoodList from "components/content/goods/GoodList";
+import Toast from "components/common/toast/Toast";
 
 import {
   getDetail,
@@ -41,9 +43,10 @@ import {
   GoodsParam,
   getRecommend,
 } from "network/detail";
-import { itemListenerMixin,backTopMixin } from "common/mixin";
+import { itemListenerMixin, backTopMixin } from "common/mixin";
 import { debounce } from "common/utils";
 
+import {mapActions, mapGetters} from 'vuex';
 export default {
   name: "Detail",
   components: {
@@ -57,8 +60,9 @@ export default {
     DetailBottomBar,
     Scroll,
     GoodList,
+		Toast,
   },
-  mixins: [itemListenerMixin,backTopMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   data() {
     return {
       iid: null,
@@ -72,6 +76,8 @@ export default {
       themeTopYs: [],
       getThemeTopY: null,
       currentIndex: 0,
+			message:'',
+			show:false
     };
   },
   created() {
@@ -141,6 +147,10 @@ export default {
     this.$bus.$off("itemImageLoad", this.itemImageListener);
   },
   methods: {
+		...mapActions(['addCart']),
+		// ...mapActions({
+		// 	add:'addCart'
+		// }),
     imageLoad() {
       this.newRefresh();
       this.getThemeTopY();
@@ -185,8 +195,32 @@ export default {
         }
       }
 
-			//3.
-			this.listenShowBackTop(position);
+      //3.
+      this.listenShowBackTop(position);
+    },
+    addToCart() {
+      // 1.获取购物车需要展示的信息添加进去
+      const product = {};
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+
+      //2.将商品添加到购物车(1.promise 2.mapActions)
+      // this.$store.commit("addCart", product); //调用mutation 修改state中的数据
+			// this.$store.dispatch('addCart',product).then(res => {
+			// 	console.log(res);
+			// }) //调用actions中的方法
+			this.addCart(product).then(res => {
+				// this.show=true;
+				// this.message = res;
+				// setTimeout(() => {
+				// 	this.show = true;
+				// 	this.message = '';
+				// },1500)
+				this.$toast.show(res,3000);
+			})
     },
   },
 };
